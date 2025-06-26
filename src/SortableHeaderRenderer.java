@@ -7,19 +7,27 @@ import javax.swing.table.TableCellRenderer;
  */
 public class SortableHeaderRenderer implements TableCellRenderer {
     private TableCellRenderer delegate;
+    private int sortColumn = -1;
+    private boolean ascending = true;
 
     public SortableHeaderRenderer(TableCellRenderer delegate) {
         this.delegate = delegate;
     }
 
     public void setSortColumn(int sortColumn, boolean ascending) {
-        // Do nothing - sorting feature removed
+        this.sortColumn = sortColumn;
+        this.ascending = ascending;
+        if (delegate instanceof MyTableHeaderRenderer) {
+            ((MyTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
+        }
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int column) {
-        // Simply pass through to the original renderer without modifications
+        if (delegate instanceof MyTableHeaderRenderer) {
+            ((MyTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
+        }
         return delegate.getTableCellRendererComponent(
                 table, value, isSelected, hasFocus, row, column);
     }
