@@ -34,9 +34,10 @@ class CustomTableHeaderRenderer extends JLabel implements TableCellRenderer{
 		}
 		// Accent color
 		Color accent = new Color(70, 130, 180); // Steel Blue
-		setText("<html><div style='color:rgb(" + accent.getRed() + "," + accent.getGreen() + "," + accent.getBlue() + ");font-weight:bold'>" + text + "</div></html>");
+		String line = "<div style='color:rgb(" + accent.getRed() + "," + accent.getGreen() + "," + accent.getBlue() + ");font-weight:bold'>";
+		setText("<html>" + line + text + "</div> </html>");
 		setPreferredSize(new Dimension(10, 32));
-		setVerticalAlignment(BOTTOM);
+		setVerticalAlignment(CENTER);
 		setOpaque(true);
 		setForeground(accent);
 		return this;
@@ -48,7 +49,10 @@ class CustomTableHeaderRenderer extends JLabel implements TableCellRenderer{
 		// Draw accent top line
 		Color accent = new Color(70, 130, 180); // Steel Blue
 		g.setColor(accent);
+		// Draw top line
 		g.fillRect(0, 0, getWidth(), 3);
+		// Draw bottom line
+		g.fillRect(0, getHeight() - 3, getWidth(), 3);
 	}
 
 }
