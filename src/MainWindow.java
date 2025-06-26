@@ -128,8 +128,10 @@ public class MainWindow extends JFrame {
 		setTitle("MPP Viewer (beta)");
 		fc = new JFileChooser(".");
 
+		// Set Screen Size and position of the window
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 800, 600);
+		setBounds(50, 0, screenSize.width - screenSize.width / 10, screenSize.height - screenSize.height / 10);
 
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);

@@ -1,5 +1,4 @@
-import java.awt.Component;
-import java.awt.Graphics;
+import java.awt.*;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
@@ -109,14 +108,12 @@ public class JTreeTableCellRenderer extends JTree implements TableCellRenderer {
 		super.paint(g);
 
 		/* Show Grid lines on the tree */
-		/*
-		 * if (treeTable.getShowHorizontalLines() &&
-		 * treeTable.getShowVerticalLines()) { Rectangle r =
-		 * treeTable.getCellRect(visibleRow, visibleColumn, false);
-		 * g.setColor(treeTable.getGridColor()); g.drawRect(r.x -
-		 * treeTable.getCellRect(visibleRow, 0, false).width - 1, r.y - 1,
-		 * r.width, r.height); }
-		 */
+		  if (treeTable.getShowHorizontalLines() &&
+		  treeTable.getShowVerticalLines()) { Rectangle r =
+		  treeTable.getCellRect(visibleRow, visibleColumn, false);
+		  g.setColor(treeTable.getGridColor()); g.drawRect(r.x -
+		  treeTable.getCellRect(visibleRow, 0, false).width - 1, r.y - 1,
+		  r.width, r.height); }
 
 	}
 
@@ -153,7 +150,9 @@ public class JTreeTableCellRenderer extends JTree implements TableCellRenderer {
 			}
 		}
 		if (!bgSet)
+		{
 			setBackground(table.getBackground());
+		}
 
 		visibleRow = row;
 		visibleColumn = column;
