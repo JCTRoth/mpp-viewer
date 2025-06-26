@@ -69,7 +69,8 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 
 							// Sort the model while preserving expansion state
 							model.sortByColumn(col, ascending, tree);
-
+							// Always expand all nodes after sorting
+							mainWindow.treeTable.expandAll(true);
 							// Update the header renderer to show sort indicator
 							sortableHeaderRenderer.setSortColumn(col, ascending);
 

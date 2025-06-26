@@ -139,27 +139,35 @@ public class ExcelOutput extends SwingWorker<Void, Void> {
 		}
 		
 		row.createCell((short) 6).setCellValue(predecessorsStr);
-		
 
+		String resourceNames = getString(task);
+
+		row.createCell((short) 7).setCellValue(resourceNames);
+
+		
+	}
+
+	/**
+	 * Returns a comma separated list of resource names assigned to the task.
+	 *
+	 * @param task
+	 *            The task for which the resource names are to be returned.
+	 * @return Comma separated list of resource names.
+	 */
+	private static String getString(Task task) {
 		List<ResourceAssignment> resourceAssignments = task
 				.getResourceAssignments();
-		int resourceCount = 0;
-
 		/* Create Comma Seperated List of resource names */
 		String resourceNames = "";
 		if (resourceAssignments != null
 				&& resourceAssignments.isEmpty() == false) {
-			resourceCount = resourceAssignments.size();
 			for (ResourceAssignment assignment : resourceAssignments) {
 				Resource resource = assignment.getResource();
 				resourceNames = resourceNames
 						+ (resource == null ? "" : resource.getName());
 			}
 		}
-		
-		row.createCell((short) 7).setCellValue(resourceNames);
-
-		
+		return resourceNames;
 	}
 
 	@Override
