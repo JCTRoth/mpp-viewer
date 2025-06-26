@@ -3,9 +3,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
@@ -38,6 +36,56 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 			mainWindow.treeTable = new JTreeTable(treeTableModel);
 			mainWindow.treeTable.setShowGrid(true);
 			mainWindow.treeTable.expandAll(true);
+
+			// Create and set up the sortable header renderer by wrapping the existing one
+			TableCellRenderer existingRenderer = mainWindow.treeTable.getTableHeader().getDefaultRenderer();
+			final SortableHeaderRenderer sortableHeaderRenderer = new SortableHeaderRenderer(existingRenderer);
+			mainWindow.treeTable.getTableHeader().setDefaultRenderer(sortableHeaderRenderer);
+
+			// Add sorting by column header click with visual feedback
+			javax.swing.table.JTableHeader header = mainWindow.treeTable.getTableHeader();
+			header.addMouseListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mouseClicked(java.awt.event.MouseEvent e) {
+					int col = header.columnAtPoint(e.getPoint());
+					if (col >= 0) {
+						try {
+							ProjectTreeTableModel model = (ProjectTreeTableModel) ((TreeTableModelAdapter) mainWindow.treeTable.getModel()).treeTableModel;
+
+							// Debug info
+							System.out.println("Sorting column: " + col);
+							System.out.println("Current tree expansion state:");
+							JTree tree = mainWindow.treeTable.getTree();
+							System.out.println("Tree row count: " + tree.getRowCount());
+
+							// Determine sort direction
+							boolean ascending = true;
+							if (model.getSortColumn() == col) {
+								// If clicking on already sorted column, toggle direction
+								ascending = !model.isAscending();
+							}
+
+							System.out.println("Sort direction: " + (ascending ? "ascending" : "descending"));
+
+							// Sort the model while preserving expansion state
+							model.sortByColumn(col, ascending, tree);
+
+							// Update the header renderer to show sort indicator
+							sortableHeaderRenderer.setSortColumn(col, ascending);
+
+							// Refresh UI
+							mainWindow.treeTable.getTableHeader().repaint();
+							mainWindow.treeTable.repaint();
+
+							// Debug info after sort
+							System.out.println("After sorting - Tree row count: " + tree.getRowCount());
+						} catch (Exception ex) {
+							System.err.println("Error during sorting: " + ex.getMessage());
+							ex.printStackTrace();
+						}
+					}
+				}
+			});
 
 			/* Autofit columns to contents */
 			mainWindow.treeTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

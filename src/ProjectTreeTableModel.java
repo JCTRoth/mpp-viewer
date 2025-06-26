@@ -1,4 +1,13 @@
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.JTree;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 public class ProjectTreeTableModel extends AbstractTreeTableModel {
     // Column name.
@@ -24,6 +33,10 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
     	String.class,
     	Integer.class,
     	String.class};
+
+    // Keep track of sort state
+    private int sortColumn = -1;
+    private boolean ascending = true;
 
     public  ProjectTreeTableModel (DataNode rootNode) {
         super(rootNode);
@@ -82,10 +95,217 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
 
     public boolean isCellEditable(Object node, int column) {
     	/* make all columns non-editable except the task column */
-        return column==1; // Important to activate TreeExpandListener
+        return true; // Important to activate TreeExpandListener
     }
 
     public void setValueAt(Object aValue, Object node, int column) {
+    	DataNode dataNode = (DataNode) node;
+        switch (column) {
+        case 1:
+            dataNode.setTask((String) aValue);
+            break;
+        case 2:
+            dataNode.setDuration((String) aValue);
+            break;
+        case 3:
+            dataNode.setStartDate((Date) aValue);
+            break;
+        case 4:
+            dataNode.setFinishDate((Date) aValue);
+            break;
+        case 5:
+            dataNode.setPercentageComplete((String) aValue);
+            break;
+        case 6:
+            dataNode.setPredecessors((String) aValue);
+            break;
+        case 8:
+            dataNode.setResourceNames((String) aValue);
+            break;
+        default:
+            break;
+        }
     }
 
+    /**
+     * Sort the project data by a specific column
+     * @param column The column index to sort by
+     * @param ascending If true, sort in ascending order; otherwise descending
+     * @param tree The JTree to maintain expansion state for
+     */
+    public void sortByColumn(int column, boolean ascending, JTree tree) {
+        this.sortColumn = column;
+        this.ascending = ascending;
+
+        // Save expanded rows before sorting
+        int[] expandedRows = null;
+        if (tree != null) {
+            // Save which rows are expanded
+            int rowCount = tree.getRowCount();
+            java.util.List<Integer> expandedRowsList = new java.util.ArrayList<>();
+            for (int i = 0; i < rowCount; i++) {
+                if (tree.isExpanded(i)) {
+                    expandedRowsList.add(i);
+                }
+            }
+            expandedRows = expandedRowsList.stream().mapToInt(i -> i).toArray();
+        }
+
+        // Sort the nodes
+        sortNodeChildren(root, column, ascending);
+
+        // Fire model changed event
+        fireTreeStructureChanged(this, new Object[] { root }, null, null);
+
+        // Restore expanded rows after sorting
+        if (tree != null && expandedRows != null) {
+            for (int row : expandedRows) {
+                if (row < tree.getRowCount()) {
+                    tree.expandRow(row);
+                }
+            }
+        }
+    }
+
+    /**
+     * Overload for backward compatibility
+     */
+    public void sortByColumn(int column, boolean ascending) {
+        this.sortColumn = column;
+        this.ascending = ascending;
+        sortNodeChildren(root, column, ascending);
+        fireTreeStructureChanged(this, new Object[] { root }, null, null);
+    }
+
+    /**
+     * Generate a unique key for a path to store in our expansion state map
+     */
+    private String getPathKey(TreePath path) {
+        StringBuilder sb = new StringBuilder();
+        Object[] pathObjects = path.getPath();
+
+        for (int i = 0; i < pathObjects.length; i++) {
+            if (pathObjects[i] instanceof DataNode) {
+                DataNode node = (DataNode) pathObjects[i];
+                sb.append(node.getID()).append("-").append(node.getTask());
+            } else {
+                sb.append(pathObjects[i].toString());
+            }
+
+            if (i < pathObjects.length - 1) {
+                sb.append("/");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Get the current sort column index
+     * @return The column index, or -1 if not sorted
+     */
+    public int getSortColumn() {
+        return sortColumn;
+    }
+
+    /**
+     * Get the current sort direction
+     * @return true if ascending, false if descending
+     */
+    public boolean isAscending() {
+        return ascending;
+    }
+
+    /**
+     * Recursively sort children of a node based on a column value
+     */
+    private void sortNodeChildren(Object node, int column, boolean ascending) {
+        DataNode dataNode = (DataNode) node;
+        if (dataNode.getChildren() == null || dataNode.getChildren().isEmpty()) {
+            return;
+        }
+
+        // Create an appropriate comparator based on column type
+        Comparator<DataNode> comparator = createComparatorForColumn(column);
+
+        if (!ascending) {
+            comparator = comparator.reversed();
+        }
+
+        // Sort this node's children
+        Collections.sort(dataNode.getChildren(), comparator);
+
+        // Recursively sort all children
+        for (DataNode child : dataNode.getChildren()) {
+            sortNodeChildren(child, column, ascending);
+        }
+    }
+
+    /**
+     * Create a comparator appropriate for the data type of the column
+     */
+    private Comparator<DataNode> createComparatorForColumn(int column) {
+        switch (column) {
+            case 0: // ID (Integer)
+                return Comparator.comparing(node -> ((DataNode) node).getID());
+
+            case 1: // Task name (String)
+                return Comparator.comparing(node -> {
+                    String val = ((DataNode) node).getTask();
+                    return val == null ? "" : val;
+                }, String.CASE_INSENSITIVE_ORDER);
+
+            case 2: // Duration (String)
+                return Comparator.comparing(node -> {
+                    String val = ((DataNode) node).getDuration();
+                    return val == null ? "" : val;
+                });
+
+            case 3: // Start date
+                return Comparator.comparing(node -> {
+                    Date val = ((DataNode) node).getStartDate();
+                    return val == null ? new Date(0) : val;
+                });
+
+            case 4: // Finish date
+                return Comparator.comparing(node -> {
+                    Date val = ((DataNode) node).getFinishDate();
+                    return val == null ? new Date(0) : val;
+                });
+
+            case 5: // % Complete (String)
+                return Comparator.comparing(node -> {
+                    String val = ((DataNode) node).getPercentageComplete();
+                    if (val == null) return 0.0;
+                    // Parse the percentage value
+                    try {
+                        return Double.parseDouble(val.replace("%", ""));
+                    } catch (NumberFormatException e) {
+                        return 0.0;
+                    }
+                });
+
+            case 6: // Predecessors (String)
+                return Comparator.comparing(node -> {
+                    String val = ((DataNode) node).getPredecessors();
+                    return val == null ? "" : val;
+                });
+
+            case 7: // Resource count (Integer)
+                return Comparator.comparing(node -> ((DataNode) node).getResources());
+
+            case 8: // Resource names (String)
+                return Comparator.comparing(node -> {
+                    String val = ((DataNode) node).getResourceNames();
+                    return val == null ? "" : val;
+                }, String.CASE_INSENSITIVE_ORDER);
+
+            default:
+                // Default to string comparison
+                return Comparator.comparing(node -> {
+                    Object value = getValueAt(node, column);
+                    return value == null ? "" : value.toString();
+                });
+        }
+    }
 }
