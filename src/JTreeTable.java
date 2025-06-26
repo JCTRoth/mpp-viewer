@@ -104,7 +104,7 @@ public class JTreeTable extends JTable {
 				this));
 
 		/* Set renderer for Table Header */
-		getTableHeader().setDefaultRenderer(new MyTableHeaderRenderer());
+		getTableHeader().setDefaultRenderer(new CustomTableHeaderRenderer());
 		getTableHeader().setReorderingAllowed(false);
 
 		/* Show Grid Lines */

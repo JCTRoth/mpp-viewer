@@ -17,16 +17,16 @@ public class SortableHeaderRenderer implements TableCellRenderer {
     public void setSortColumn(int sortColumn, boolean ascending) {
         this.sortColumn = sortColumn;
         this.ascending = ascending;
-        if (delegate instanceof MyTableHeaderRenderer) {
-            ((MyTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
+        if (delegate instanceof CustomTableHeaderRenderer) {
+            ((CustomTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
         }
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int row, int column) {
-        if (delegate instanceof MyTableHeaderRenderer) {
-            ((MyTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
+        if (delegate instanceof CustomTableHeaderRenderer) {
+            ((CustomTableHeaderRenderer) delegate).setSortState(sortColumn, ascending);
         }
         return delegate.getTableCellRendererComponent(
                 table, value, isSelected, hasFocus, row, column);

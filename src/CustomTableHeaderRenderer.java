@@ -7,7 +7,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-class MyTableHeaderRenderer extends JLabel implements TableCellRenderer{
+class CustomTableHeaderRenderer extends JLabel implements TableCellRenderer{
 
 	/**
 	 * 
