@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -31,12 +32,23 @@ class CustomTableHeaderRenderer extends JLabel implements TableCellRenderer{
 			String arrow = ascending ? " \u25B2" : " \u25BC"; // ? or ?
 			text += arrow;
 		}
-		setText("<HTML><div style='font-weight:normal'>"+text+"</div></HTML>");
+		// Accent color
+		Color accent = new Color(70, 130, 180); // Steel Blue
+		setText("<html><div style='color:rgb(" + accent.getRed() + "," + accent.getGreen() + "," + accent.getBlue() + ");font-weight:bold'>" + text + "</div></html>");
 		setPreferredSize(new Dimension(10, 32));
-		setVerticalAlignment(TOP);
+		setVerticalAlignment(BOTTOM);
 		setOpaque(true);
-		setBackground(new Color(223,227,232));
+		setForeground(accent);
 		return this;
 	}
-	
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		// Draw accent top line
+		Color accent = new Color(70, 130, 180); // Steel Blue
+		g.setColor(accent);
+		g.fillRect(0, 0, getWidth(), 3);
+	}
+
 }

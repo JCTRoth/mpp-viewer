@@ -214,9 +214,9 @@ public class ExcelOutput extends SwingWorker<Void, Void> {
 		setProgress(60);
 		
 		sheet.setColumnWidth(1, maxTaskNameLength*250);
-		sheet.setColumnWidth(3, 17*250);
-		sheet.setColumnWidth(4, 17*250);
-		
+		sheet.setColumnWidth(3, 17*250); // Start date
+		sheet.setColumnWidth(4, 17*250); // Start and Finish dates
+
 		writeToFile(outputFile);
 		setProgress(100);
 		return null;

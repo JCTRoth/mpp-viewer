@@ -369,6 +369,7 @@ public class MainWindow extends JFrame {
 		table.getColumnModel().getColumn(0).setPreferredWidth(26);
 		table.getColumnModel().getColumn(1).setPreferredWidth(280);
 		table.getColumnModel().getColumn(1).setMinWidth(100);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		table.getTableHeader().setDefaultRenderer(new CustomTableHeaderRenderer());
 		
 		JToolBar toolBar_3 = new JToolBar();
