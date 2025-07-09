@@ -14,6 +14,12 @@ public class SortableHeaderRenderer implements TableCellRenderer {
         this.delegate = delegate;
     }
 
+    /**
+     * Sets the sort column and order.
+     *
+     * @param sortColumn the index of the column to sort
+     * @param ascending  true for ascending order, false for descending
+     */
     public void setSortColumn(int sortColumn, boolean ascending) {
         this.sortColumn = sortColumn;
         this.ascending = ascending;

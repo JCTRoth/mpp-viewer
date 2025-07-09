@@ -1,13 +1,8 @@
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JTree;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
 
 public class ProjectTreeTableModel extends AbstractTreeTableModel {
     // Column name.
@@ -99,32 +94,6 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
     }
 
     public void setValueAt(Object aValue, Object node, int column) {
-    	DataNode dataNode = (DataNode) node;
-        switch (column) {
-        case 1:
-            dataNode.setTask((String) aValue);
-            break;
-        case 2:
-            dataNode.setDuration((String) aValue);
-            break;
-        case 3:
-            dataNode.setStartDate((Date) aValue);
-            break;
-        case 4:
-            dataNode.setFinishDate((Date) aValue);
-            break;
-        case 5:
-            dataNode.setPercentageComplete((String) aValue);
-            break;
-        case 6:
-            dataNode.setPredecessors((String) aValue);
-            break;
-        case 8:
-            dataNode.setResourceNames((String) aValue);
-            break;
-        default:
-            break;
-        }
     }
 
     /**
@@ -167,38 +136,6 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
         }
     }
 
-    /**
-     * Overload for backward compatibility
-     */
-    public void sortByColumn(int column, boolean ascending) {
-        this.sortColumn = column;
-        this.ascending = ascending;
-        sortNodeChildren(root, column, ascending);
-        fireTreeStructureChanged(this, new Object[] { root }, null, null);
-    }
-
-    /**
-     * Generate a unique key for a path to store in our expansion state map
-     */
-    private String getPathKey(TreePath path) {
-        StringBuilder sb = new StringBuilder();
-        Object[] pathObjects = path.getPath();
-
-        for (int i = 0; i < pathObjects.length; i++) {
-            if (pathObjects[i] instanceof DataNode) {
-                DataNode node = (DataNode) pathObjects[i];
-                sb.append(node.getID()).append("-").append(node.getTask());
-            } else {
-                sb.append(pathObjects[i].toString());
-            }
-
-            if (i < pathObjects.length - 1) {
-                sb.append("/");
-            }
-        }
-
-        return sb.toString();
-    }
 
     /**
      * Get the current sort column index
