@@ -95,6 +95,13 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 				int preferredWidth = tableColumn.getMinWidth();
 				int maxWidth = tableColumn.getMaxWidth();
 
+				// Consider header width for better column sizing
+				TableCellRenderer headerRenderer = mainWindow.treeTable.getTableHeader().getDefaultRenderer();
+				Component headerComp = headerRenderer.getTableCellRendererComponent(
+						mainWindow.treeTable, tableColumn.getHeaderValue(), false, false, 0, column);
+				int headerWidth = headerComp.getPreferredSize().width + mainWindow.treeTable.getIntercellSpacing().width + 10; // Add padding
+				preferredWidth = Math.max(preferredWidth, headerWidth);
+
 				for (int row = 0; row < mainWindow.treeTable.getRowCount(); row++) {
 					TableCellRenderer cellRenderer = mainWindow.treeTable.getCellRenderer(row, column);
 					Component c = mainWindow.treeTable.prepareRenderer(cellRenderer, row, column);
@@ -103,11 +110,22 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 
 					// We've exceeded the maximum width, no need to check
 					// other rows
-
 					if (preferredWidth >= maxWidth) {
 						preferredWidth = maxWidth;
 						break;
 					}
+				}
+
+				// Add extra space for specific columns that need more room
+				String columnName = tableColumn.getHeaderValue().toString();
+				if (columnName.equals("Duration")) {
+					preferredWidth += 15;
+				} else if (columnName.equals("Predecessors")) {
+					preferredWidth += 50;
+				} else if (columnName.equals("% Complete")) {
+					preferredWidth += 75;
+				} else if (columnName.contains("Resource Count")) {
+					preferredWidth += 190;
 				}
 
 				tableColumn.setPreferredWidth(preferredWidth);
@@ -198,6 +216,26 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 		mainWindow.scrollPane.remove(mainWindow.table);
 		mainWindow.scrollPane.setViewportView(mainWindow.treeTable);
 		//mainWindow.treeTable.setRowHeight(50);
+
+		// Calculate the total width needed for the table
+		int totalWidth = 0;
+		for (int i = 0; i < mainWindow.treeTable.getColumnCount(); i++) {
+			totalWidth += mainWindow.treeTable.getColumnModel().getColumn(i).getPreferredWidth();
+		}
+		// Add some padding for scrollbar and window borders
+		totalWidth += 30;
+
+		// Get current window dimensions
+		java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+		int currentHeight = mainWindow.getHeight();
+
+		// Set the new width, but don't exceed screen width
+		int newWidth = Math.min(totalWidth, screenSize.width - 50);
+		mainWindow.setSize(newWidth, currentHeight);
+
+		// Center the window on screen
+		mainWindow.setLocationRelativeTo(null);
+
 		mainWindow.scrollPane.validate();
 		mainWindow.scrollPane.repaint();
 		mainWindow.setTitle(mainWindow.APP_TITLE + " - " + file.getName());
@@ -208,6 +246,5 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 		// System.out.println(mainWindow.treeTable.getModel().getValueAt(9, 1));
 		// System.out.println(mainWindow.treeTable.getModel().getValueAt(10,
 		// 1));
-
 	}
 }
