@@ -119,11 +119,14 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 				// Add extra space for specific columns that need more room
 				String columnName = tableColumn.getHeaderValue().toString();
 				if (columnName.equals("Duration")) {
-					preferredWidth += 15;
-				} else if (columnName.equals("Predecessors")) {
+					preferredWidth += 27;
+				} else if (columnName.equals("ID")) {
+					preferredWidth += 10;
+				}
+				else if (columnName.equals("Predecessors")) {
 					preferredWidth += 50;
 				} else if (columnName.equals("% Complete")) {
-					preferredWidth += 75;
+					preferredWidth += 80;
 				} else if (columnName.contains("Resource Count")) {
 					preferredWidth += 190;
 				}
