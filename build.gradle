@@ -55,13 +55,31 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// Create directory for all executable outputs
+def executablesDir = "${buildDir}/executables"
+
 // Task to create Windows EXE file using launch4j (works on Linux too)
 task createExe(type: Exec) {
+    // Make sure JAR is created first
+    dependsOn 'jar'
+
     // Nicht nur auf Windows beschränken - funktioniert auch auf Linux
     // onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
 
     doFirst {
         println "Creating Windows EXE file..."
+
+        // Create executables directory if it doesn't exist
+        mkdir executablesDir
+
+        // Copy the JAR file directly here to ensure it exists
+        copy {
+            from "${buildDir}/libs/${project.name}-${version}.jar"
+            into executablesDir
+            rename "${project.name}-${version}.jar", "${project.name}.jar"
+        }
+
+        println "JAR file copied to ${executablesDir}/${project.name}.jar"
 
         // Check if launch4j is installed - try local version first, then system version
         def isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows()
@@ -87,8 +105,15 @@ task createExe(type: Exec) {
                                      .replace('${project.name}', project.name)
                                      .replace('${version}', version.toString())
                                      .replace('${rootDir}', rootDir.toString())
-        
+                                     .replace('${executablesDir}', executablesDir.toString())
+
         configFile.text = configTemplate
+
+        // Check if JAR exists before running Launch4j
+        def jarFile = file("${executablesDir}/${project.name}.jar")
+        if (!jarFile.exists()) {
+            throw new GradleException("JAR file not found at: ${jarFile}. Cannot create EXE without JAR.")
+        }
 
         // Execute launch4j
         try {
@@ -98,6 +123,10 @@ task createExe(type: Exec) {
             println "You need to install Launch4j or use the local version in tools/launch4j"
             throw e
         }
+    }
+
+    doLast {
+        println "Windows EXE file created at: ${executablesDir}/${project.name}.exe"
     }
 }
 
@@ -113,8 +142,13 @@ task createAppImage(type: Exec) {
     doFirst {
         println "Creating AppImage..."
 
+        // Create executables directory if it doesn't exist
+        mkdir executablesDir
+
+        // Set the output file path
+        def appImageFile = file("${executablesDir}/MPP-Viewer.AppImage")
+
         // Clean up any existing AppImage to avoid "Text file busy" error
-        def appImageFile = file("$buildDir/MPP-Viewer.AppImage")
         if (appImageFile.exists()) {
             println "Removing existing AppImage..."
             appImageFile.delete()
@@ -205,7 +239,7 @@ task createAppImage(type: Exec) {
                 }
 
                 // Update command for createAppImage task
-                project.tasks.findByName('createAppImage').commandLine = ['/tmp/appimagetool', "$buildDir/appdir", "$buildDir/MPP-Viewer.AppImage"]
+                project.tasks.findByName('createAppImage').commandLine = ['/tmp/appimagetool', "$buildDir/appdir", "${executablesDir}/MPP-Viewer.AppImage"]
             }
         }
     }
@@ -214,17 +248,25 @@ task createAppImage(type: Exec) {
 
     // Command to create AppImage (this will be used if appimagetool is in PATH)
     workingDir "$buildDir"
-    commandLine 'appimagetool', 'appdir', 'MPP-Viewer.AppImage'
+    commandLine 'appimagetool', 'appdir', "${executablesDir}/MPP-Viewer.AppImage"
 
     doLast {
-        println "AppImage created at: $buildDir/MPP-Viewer.AppImage"
-        println "You can run it with: $buildDir/MPP-Viewer.AppImage"
+        println "AppImage created at: ${executablesDir}/MPP-Viewer.AppImage"
+        println "You can run it with: ${executablesDir}/MPP-Viewer.AppImage"
     }
+}
+
+// Task to copy JAR to executables directory
+task copyJarToExecutables(type: Copy) {
+    dependsOn 'jar'
+    from "${buildDir}/libs/${project.name}-${version}.jar"
+    into executablesDir
+    rename "${project.name}-${version}.jar", "${project.name}.jar"
 }
 
 // Unified task to create all executables
 task createExecutables {
-    dependsOn 'jar'
+    dependsOn 'copyJarToExecutables'
     dependsOn 'createExe'  // Jetzt immer die EXE-Datei erstellen, unabhängig vom Betriebssystem
 
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
@@ -232,11 +274,12 @@ task createExecutables {
     }
 
     doLast {
-        println "Created executable JAR: ${buildDir}/libs/${project.name}-${version}.jar"
-        println "Created EXE file: ${buildDir}/libs/${project.name}.exe"
+        println "All executables created in: ${executablesDir}/"
+        println "Created JAR file: ${executablesDir}/${project.name}.jar"
+        println "Created EXE file: ${executablesDir}/${project.name}.exe"
 
         if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-            println "Created AppImage: ${buildDir}/MPP-Viewer.AppImage"
+            println "Created AppImage: ${executablesDir}/MPP-Viewer.AppImage"
         }
     }
 }

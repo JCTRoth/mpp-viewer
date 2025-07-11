@@ -2,8 +2,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>${buildDir}/libs/${project.name}-${version}.jar</jar>
-  <outfile>${buildDir}/libs/${project.name}.exe</outfile>
+  <jar>${executablesDir}/${project.name}.jar</jar>
+  <outfile>${executablesDir}/${project.name}.exe</outfile>
   <errTitle>MPP Viewer</errTitle>
   <chdir>.</chdir>
   <priority>normal</priority>
