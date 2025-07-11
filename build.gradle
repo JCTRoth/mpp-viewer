@@ -8,6 +8,7 @@ targetCompatibility = '1.8'
 
 // Define the main class for the application
 mainClassName = 'MainWindow'
+applicationName = 'mpp-viewer'
 
 repositories {
     mavenCentral()
@@ -39,6 +40,7 @@ processResources {
     include '**/*.properties'
 }
 
+// Create a fat JAR with all dependencies
 jar {
     manifest {
         attributes(
@@ -52,3 +54,184 @@ jar {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// Task to create Windows EXE file using launch4j
+task createExe(type: Exec) {
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
+
+    doFirst {
+        println "Creating Windows EXE file..."
+
+        // Check if launch4j is installed
+        def launch4jCmd = System.getProperty("os.name").toLowerCase().contains("windows") ?
+                "launch4jc.exe" : "launch4j"
+
+        // Create a launch4j configuration file
+        def configFile = file("${buildDir}/launch4j-config.xml")
+
+        // Copy the template and replace variables
+        def configTemplate = file("gradle/launch4j-config.xml").text
+        configTemplate = configTemplate.replace('${buildDir}', buildDir.toString())
+                                     .replace('${project.name}', project.name)
+                                     .replace('${version}', version.toString())
+
+        configFile.text = configTemplate
+
+        // Execute launch4j if available
+        try {
+            commandLine launch4jCmd, configFile
+        } catch (Exception e) {
+            println "Warning: Launch4j not found in PATH. EXE file could not be created."
+            println "You need to install Launch4j to use this task."
+            throw e
+        }
+    }
+}
+
+// Task to create AppImage on Linux
+task createAppImage(type: Exec) {
+    dependsOn 'installDist'
+
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isLinux() }
+
+    // Set environment variable for appimagetool
+    environment "ARCH", "x86_64"
+
+    doFirst {
+        println "Creating AppImage..."
+
+        // Clean up any existing AppImage to avoid "Text file busy" error
+        def appImageFile = file("$buildDir/MPP-Viewer.AppImage")
+        if (appImageFile.exists()) {
+            println "Removing existing AppImage..."
+            appImageFile.delete()
+        }
+
+        // Create a temporary AppDir structure
+        delete "$buildDir/appdir"  // Delete existing appdir to ensure clean state
+        mkdir "$buildDir/appdir"
+        mkdir "$buildDir/appdir/usr"
+        mkdir "$buildDir/appdir/usr/bin"
+        mkdir "$buildDir/appdir/usr/share"
+        mkdir "$buildDir/appdir/usr/share/applications"
+        mkdir "$buildDir/appdir/usr/share/icons"
+        mkdir "$buildDir/appdir/usr/share/icons/hicolor"
+        mkdir "$buildDir/appdir/usr/share/icons/hicolor/256x256"
+        mkdir "$buildDir/appdir/usr/share/icons/hicolor/256x256/apps"
+
+        // Copy application files
+        copy {
+            from "${buildDir}/install/${project.name}/bin"
+            into "$buildDir/appdir/usr/bin"
+        }
+
+        copy {
+            from "${buildDir}/install/${project.name}/lib"
+            into "$buildDir/appdir/usr/lib"
+        }
+
+        // Copy icon to both locations - AppDir root and standard location
+        copy {
+            from 'src/res/icon32.png'
+            into "$buildDir/appdir/usr/share/icons/hicolor/256x256/apps"
+            rename 'icon32.png', 'mpp-viewer.png'
+        }
+
+        // Also copy icon to AppDir root (required by AppImage spec)
+        copy {
+            from 'src/res/icon32.png'
+            into "$buildDir/appdir/"
+            rename 'icon32.png', 'mpp-viewer.png'
+        }
+
+        // Copy desktop file to both standard location and AppDir root
+        copy {
+            from 'gradle/appimage-desktop.desktop'
+            into "$buildDir/appdir/usr/share/applications"
+            rename 'appimage-desktop.desktop', 'mpp-viewer.desktop'
+        }
+
+        copy {
+            from 'gradle/appimage-desktop.desktop'
+            into "$buildDir/appdir/"
+            rename 'appimage-desktop.desktop', 'mpp-viewer.desktop'
+        }
+
+        // Copy and set permissions for AppRun file
+        copy {
+            from 'gradle/appimage-apprun'
+            into "$buildDir/appdir"
+            rename 'appimage-apprun', 'AppRun'
+        }
+
+        exec {
+            commandLine 'chmod', '+x', "$buildDir/appdir/AppRun"
+        }
+    }
+
+    // Check if appimagetool is in PATH, download if not available
+    def checkAppImageTool = tasks.create("checkAppImageTool") {
+        doLast {
+            def appimageToolInPath = false
+
+            try {
+                def process = "which appimagetool".execute()
+                process.waitFor()
+                if (process.exitValue() == 0 && process.text.trim()) {
+                    appimageToolInPath = true
+                }
+            } catch (Exception e) {
+                // Command failed, tool not in path
+            }
+
+            if (!appimageToolInPath) {
+                println "appimagetool not found in PATH, downloading temporary copy..."
+                exec {
+                    commandLine 'bash', '-c',
+                        'rm -f /tmp/appimagetool && wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O /tmp/appimagetool && chmod +x /tmp/appimagetool'
+                }
+
+                // Update command for createAppImage task
+                project.tasks.findByName('createAppImage').commandLine = ['/tmp/appimagetool', "$buildDir/appdir", "$buildDir/MPP-Viewer.AppImage"]
+            }
+        }
+    }
+
+    dependsOn checkAppImageTool
+
+    // Command to create AppImage (this will be used if appimagetool is in PATH)
+    workingDir "$buildDir"
+    commandLine 'appimagetool', 'appdir', 'MPP-Viewer.AppImage'
+
+    doLast {
+        println "AppImage created at: $buildDir/MPP-Viewer.AppImage"
+        println "You can run it with: $buildDir/MPP-Viewer.AppImage"
+    }
+}
+
+// Unified task to create all executables
+task createExecutables {
+    dependsOn 'jar'
+
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+        dependsOn 'createExe'
+    }
+
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+        dependsOn 'createAppImage'
+    }
+
+    doLast {
+        println "Created executable JAR: ${buildDir}/libs/${project.name}-${version}.jar"
+
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+            println "Created EXE file: ${buildDir}/libs/${project.name}.exe"
+        }
+
+        if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+            println "Created AppImage: ${buildDir}/MPP-Viewer.AppImage"
+        }
+    }
+}
+
+version = '1.0.0'
