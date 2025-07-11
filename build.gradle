@@ -57,11 +57,56 @@ jar {
 
 // Create directory for all executable outputs
 def executablesDir = "${buildDir}/executables"
+def jreDir = "${buildDir}/jre"
+
+// Task to download and prepare a minimal JRE for Windows
+task downloadJre {
+    doLast {
+        def jreArchive = "${buildDir}/jre-windows.zip"
+        def jreUrl = "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u382-b05/OpenJDK8U-jre_x64_windows_hotspot_8u382b05.zip"
+
+        // Create directories
+        mkdir buildDir
+        mkdir jreDir
+
+        // Only download if not already present
+        def jreArchiveFile = file(jreArchive)
+        if (!jreArchiveFile.exists()) {
+            println "Downloading JRE for Windows..."
+
+            // Download with Gradle API
+            ant.get(src: jreUrl, dest: jreArchive, skipexisting: true)
+
+            println "Downloaded JRE to ${jreArchive}"
+        } else {
+            println "JRE archive already exists at ${jreArchive}"
+        }
+
+        // Extract only if not already extracted
+        def extractedJre = file("${jreDir}/bin/java.exe")
+        if (!extractedJre.exists()) {
+            println "Extracting JRE..."
+
+            // Clean the directory first
+            delete jreDir
+            mkdir jreDir
+
+            // Extract the JRE
+            ant.unzip(src: jreArchive, dest: jreDir) {
+                cutdirsmapper(dirs: 1)
+            }
+
+            println "Extracted JRE to ${jreDir}"
+        } else {
+            println "JRE already extracted to ${jreDir}"
+        }
+    }
+}
 
 // Task to create Windows EXE file using launch4j (works on Linux too)
 task createExe(type: Exec) {
-    // Make sure JAR is created first
-    dependsOn 'jar'
+    // Make sure JAR is created first and JRE is downloaded
+    dependsOn 'jar', 'downloadJre'
 
     // Nicht nur auf Windows beschränken - funktioniert auch auf Linux
     // onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows() }
@@ -106,6 +151,7 @@ task createExe(type: Exec) {
                                      .replace('${version}', version.toString())
                                      .replace('${rootDir}', rootDir.toString())
                                      .replace('${executablesDir}', executablesDir.toString())
+                                     .replace('${jreDir}', jreDir.toString())
 
         configFile.text = configTemplate
 
@@ -113,6 +159,12 @@ task createExe(type: Exec) {
         def jarFile = file("${executablesDir}/${project.name}.jar")
         if (!jarFile.exists()) {
             throw new GradleException("JAR file not found at: ${jarFile}. Cannot create EXE without JAR.")
+        }
+
+        // Check if JRE exists
+        def jreFile = file("${jreDir}/bin/java.exe")
+        if (!jreFile.exists()) {
+            throw new GradleException("JRE not found at: ${jreDir}. Cannot create EXE with bundled JRE.")
         }
 
         // Execute launch4j
@@ -127,6 +179,7 @@ task createExe(type: Exec) {
 
     doLast {
         println "Windows EXE file created at: ${executablesDir}/${project.name}.exe"
+        println "This EXE contains a bundled JRE and doesn't require Java to be installed."
     }
 }
 
