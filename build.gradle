@@ -63,6 +63,9 @@ def jreDir = "${buildDir}/jre"
 task downloadJre {
     doLast {
         def jreArchive = "${buildDir}/jre-windows.zip"
+        // As far as I know, there is no Gradle API for downloading JREs,
+        // that's why I had to hardcode the URL.
+        // If you know a better way, feel free to replace it.
         def jreUrl = "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u382-b05/OpenJDK8U-jre_x64_windows_hotspot_8u382b05.zip"
 
         // Create directories
