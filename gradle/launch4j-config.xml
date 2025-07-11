@@ -12,7 +12,7 @@
   <stayAlive>false</stayAlive>
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
-  <icon>src/res/icon32.ico</icon>
+  <icon>${rootDir}/src/res/icon32.ico</icon>
   <jre>
     <path></path>
     <bundledJre64Bit>false</bundledJre64Bit>
@@ -23,4 +23,3 @@
     <runtimeBits>64/32</runtimeBits>
   </jre>
 </launch4jConfig>
-
