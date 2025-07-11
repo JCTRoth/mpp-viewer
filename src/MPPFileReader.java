@@ -16,8 +16,8 @@ import net.sf.mpxj.mpp.MPPReader;
 import net.sf.mpxj.reader.ProjectReader;
 
 public class MPPFileReader extends SwingWorker<Void, Void> {
-	private File file;
-	private MainWindow mainWindow;
+	private final File file;
+	private final MainWindow mainWindow;
 
 	public MPPFileReader(MainWindow mw, File file) {
 		super();
@@ -175,7 +175,7 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 
 			/* Convert predecessor list to string of ids */
 			String predecessorsStr = "";
-			if (predecessors != null && predecessors.isEmpty() == false) {
+			if (predecessors != null && !predecessors.isEmpty()) {
 				for (Relation relation : predecessors) {
 					predecessorsStr = predecessorsStr + relation.getTargetTask().getID() + ",";
 				}
@@ -187,7 +187,7 @@ public class MPPFileReader extends SwingWorker<Void, Void> {
 
 			/* Create Comma Seperated List of resource names */
 			String resourceNames = "";
-			if (resourceAssignments != null && resourceAssignments.isEmpty() == false) {
+			if (resourceAssignments != null && !resourceAssignments.isEmpty()) {
 				resourceCount = resourceAssignments.size();
 				for (ResourceAssignment assignment : resourceAssignments) {
 					Resource resource = assignment.getResource();

@@ -27,8 +27,8 @@ public class ExcelOutput extends SwingWorker<Void, Void> {
 	Workbook wb;
 	Sheet sheet;
 	short rowIndex = 0;
-	private ProjectFile projectFile;
-	private File outputFile;
+	private final ProjectFile projectFile;
+	private final File outputFile;
 	MainWindow mainWindow;
 	CreationHelper createHelper;
 	int maxTaskNameLength=0;
@@ -129,7 +129,7 @@ public class ExcelOutput extends SwingWorker<Void, Void> {
 
 		/* Convert predecessor list to string of ids */
 		String predecessorsStr = "";
-		if (predecessors != null && predecessors.isEmpty() == false) {
+		if (predecessors != null && !predecessors.isEmpty()) {
 			for (Relation relation : predecessors) {
 				predecessorsStr = predecessorsStr
 						+ relation.getTargetTask().getID() + ",";
@@ -160,7 +160,7 @@ public class ExcelOutput extends SwingWorker<Void, Void> {
 		/* Create Comma Seperated List of resource names */
 		String resourceNames = "";
 		if (resourceAssignments != null
-				&& resourceAssignments.isEmpty() == false) {
+				&& !resourceAssignments.isEmpty()) {
 			for (ResourceAssignment assignment : resourceAssignments) {
 				Resource resource = assignment.getResource();
 				resourceNames = resourceNames

@@ -6,7 +6,7 @@ import javax.swing.table.TableCellRenderer;
  * A simple pass-through renderer that delegates to the original renderer
  */
 public class SortableHeaderRenderer implements TableCellRenderer {
-    private TableCellRenderer delegate;
+    private final TableCellRenderer delegate;
     private int sortColumn = -1;
     private boolean ascending = true;
 

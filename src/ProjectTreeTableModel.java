@@ -184,35 +184,35 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
     private Comparator<DataNode> createComparatorForColumn(int column) {
         switch (column) {
             case 0: // ID (Integer)
-                return Comparator.comparing(node -> ((DataNode) node).getID());
+                return Comparator.comparing(node -> node.getID());
 
             case 1: // Task name (String)
                 return Comparator.comparing(node -> {
-                    String val = ((DataNode) node).getTask();
+                    String val = node.getTask();
                     return val == null ? "" : val;
                 }, String.CASE_INSENSITIVE_ORDER);
 
             case 2: // Duration (String)
                 return Comparator.comparing(node -> {
-                    String val = ((DataNode) node).getDuration();
+                    String val = node.getDuration();
                     return val == null ? "" : val;
                 });
 
             case 3: // Start date
                 return Comparator.comparing(node -> {
-                    Date val = ((DataNode) node).getStartDate();
+                    Date val = node.getStartDate();
                     return val == null ? new Date(0) : val;
                 });
 
             case 4: // Finish date
                 return Comparator.comparing(node -> {
-                    Date val = ((DataNode) node).getFinishDate();
+                    Date val = node.getFinishDate();
                     return val == null ? new Date(0) : val;
                 });
 
             case 5: // % Complete (String)
                 return Comparator.comparing(node -> {
-                    String val = ((DataNode) node).getPercentageComplete();
+                    String val = node.getPercentageComplete();
                     if (val == null) return 0.0;
                     // Parse the percentage value
                     try {
@@ -224,16 +224,16 @@ public class ProjectTreeTableModel extends AbstractTreeTableModel {
 
             case 6: // Predecessors (String)
                 return Comparator.comparing(node -> {
-                    String val = ((DataNode) node).getPredecessors();
+                    String val = node.getPredecessors();
                     return val == null ? "" : val;
                 });
 
             case 7: // Resource count (Integer)
-                return Comparator.comparing(node -> ((DataNode) node).getResources());
+                return Comparator.comparing(node -> node.getResources());
 
             case 8: // Resource names (String)
                 return Comparator.comparing(node -> {
-                    String val = ((DataNode) node).getResourceNames();
+                    String val = node.getResourceNames();
                     return val == null ? "" : val;
                 }, String.CASE_INSENSITIVE_ORDER);
 

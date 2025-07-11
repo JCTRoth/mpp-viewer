@@ -82,7 +82,7 @@ public class JTreeTableCellRenderer extends JTree implements TableCellRenderer {
 			List<DataNode> children = node.getChildren();
 			ListIterator<DataNode> e = children.listIterator();
 			while (e.hasNext()) {
-				DataNode treeNode = (DataNode) e.next();
+				DataNode treeNode = e.next();
 				if (expand) {
 					expandPath(path.pathByAddingChild(treeNode));
 				} else {
